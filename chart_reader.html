@@ -1,0 +1,198 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>knitwit chart viewer</title>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
+
+<!-- Latest compiled and minified CSS -->
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+
+<!-- Optional theme -->
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
+
+<!-- Latest compiled and minified JavaScript -->
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+</head>
+
+<style type="text/css">
+	#chartWrapper,
+	#inputWrapper {
+		max-width: 95%;
+		margin: 1em auto;
+	}
+
+	#chartWrapper {
+		position: relative;
+		overflow: hidden;
+		border: 1px solid #000;
+	}
+
+	#chart {
+		position: absolute;
+		top: 0;
+		left: 0;
+	}
+
+	.header {
+		position: absolute;
+		background-repeat: no-repeat;		
+	}
+
+	#rowHeader {
+		width: 100%;
+		/*border-bottom: 1px solid green;*/
+		border-top: 3px solid red;
+	}
+
+	#colHeader {
+		height: 100%;
+		/*border-right: 1px solid orange;*/
+		border-right: 3px solid red;
+	}
+
+	.colMarker {
+		height: 100%;
+		position: absolute;
+		border-left: 1px solid orange;
+	}
+
+	#screen {
+		width: 100%;
+		height: 100%;
+		background-color: rgba(0,0,0,0.5);
+		position: absolute;
+		bottom: 0;
+		left: 0;
+	}
+</style>
+
+<body>
+
+<div id="inputWrapper">
+	<div class="row">
+		<div class="col-xs-6">
+			<div class="input-group">
+				<span class="input-group-btn"><button id="prevRow" class="btn btn-primary">&laquo;</button></span>
+				<span class="input-group-addon">Row</span>
+				<input id="rowCount" class="form-control numbersOnly" />
+				<span class="input-group-btn"><button id="nextRow" class="btn btn-primary">&raquo;</button></span>
+			</div>
+		</div>
+		<div class="col-xs-6">
+			<div class="input-group">
+				<span class="input-group-btn"><button id="prevCol" class="btn btn-primary">&laquo;</button></span>
+				<span class="input-group-addon">Col</span>
+				<input id="colCount" class="form-control numbersOnly" />
+				<span class="input-group-btn"><button id="nextCol" class="btn btn-primary">&raquo;</button></span>
+			</div>
+		</div>
+	</div>
+</div>
+
+<div id="chartWrapper">
+	<img id="chart" src="protection_tattoo.png" />
+	<div id="screen"></div>
+	<div id="colHeader" class="header"></div>
+	<div id="rowHeader" class="header"></div>
+</div>
+
+<script language="javascript">
+	// init vars
+	var rowHeaderH = 13;
+	var rowH = rowHeaderH;
+	var colHeaderW = 16;
+	var colW = colHeaderW;
+	var chartW = $("#chartWrapper").width();
+	var chartH = $(window).height() - $("#inputWrapper").height() - 50;
+
+	// setup
+	$("#chartWrapper").css("height", chartH + "px");
+
+	$(".header").css("background", "url('"+ $("#chart").attr("src") +"')");
+	$("#rowHeader").css("height", rowHeaderH+"px");
+	$("#colHeader").css("width", colHeaderW+"px");
+
+	// move screen just below one row
+	$("#screen, #rowHeader").css("top", (rowHeaderH+rowH) +"px");
+
+	// make column markers
+	for(var a=(colW*10+colHeaderW); a<chartW; a=a+(colW*10)) {
+		$("#chartWrapper").append('<div class="colMarker" style="left: '+ a +'px"></div>');
+	}
+
+	$(".numbersOnly").bind("keyup", function() {
+		$(this).val( $(this).val().replace(/[^0-9]/ig, "") );
+	});
+
+	/* ====================
+		cols
+	==================== */
+		function changeCol(num) {
+			var newCol = (num>0 ? num : 1);
+			var colPos = ((newCol * colW)-colHeaderW);
+			$("#chart").css("left", "-"+ colPos +"px");
+			$("#colCount").val(newCol);
+			window.location = "#row"+ $("#rowCount").val() +"col" + $("#colCount").val();
+			$("#rowHeader").css("background-position", '-'+ colPos +'px 0px');
+		}
+
+		$("#colCount").bind("blur", function() {
+			changeCol( $(this).val() );
+		});
+
+		$("#nextCol").bind("click", function() {
+			changeCol( Number($("#colCount").val())+1*10 );
+		});
+
+		$("#prevCol").bind("click", function() {
+			changeCol( Number($("#colCount").val())-1*10 );
+		});
+
+	/* ====================
+		rows
+	==================== */
+		function changeRow(num) {
+			var newRow = (num>0 ? num : 1);
+			var rowPos = ((newRow * rowH)-rowHeaderH);
+			if(rowPos<=0) rowPos = 0;
+			$("#chart").css("top", "-"+ rowPos +"px");
+			$("#rowCount").val(newRow);
+			window.location = "#row"+ $("#rowCount").val() +"col" + $("#colCount").val();
+			$("#colHeader").css("background-position", '0px -'+ rowPos +'px');
+			changeCol(1);
+		}
+
+		$("#rowCount").bind("blur", function() {
+			changeRow( $(this).val() );
+		});
+
+		$("#nextRow").bind("click", function() {
+			changeRow( Number($("#rowCount").val())+1 );
+		});
+
+		$("#prevRow").bind("click", function() {
+			changeRow( Number($("#rowCount").val())-1 );
+		});
+
+	/* ====================
+		init
+	==================== */
+		var currentCol = 1;
+		var currentRow = 1;
+		if(location.href.split("#").length>1) {
+			var anchor = location.href.split("#")[1];
+			if(anchor.match(/col\d*/g)) {
+				currentCol = Number(anchor.match(/col\d*/g)[0].replace(/\D/g, ""));
+			}
+			if(anchor.match(/row\d*/g)) {
+				currentRow = Number(anchor.match(/row\d*/g)[0].replace(/\D/g, ""));
+			}
+		}
+
+		changeRow(currentRow); // init
+		changeCol(currentCol); // init
+</script>
+
+</body>
+</html>
